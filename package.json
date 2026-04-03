@@ -1,0 +1,22 @@
+{
+  "name": "owasp-a09-cwe778-lab",
+  "version": "1.0.0",
+  "description": "Laboratorio Vulnerable by Design — OWASP A09: CWE-778 Insufficient Logging. Simula el fallo de enumeración silenciosa en AWS Global Accelerator.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "keywords": [
+    "owasp",
+    "a09",
+    "cwe-778",
+    "insufficient-logging",
+    "vulnerable-by-design",
+    "security-lab"
+  ],
+  "author": "Security Lab",
+  "license": "MIT"
+}

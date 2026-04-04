@@ -1,28 +1,24 @@
-# ============================================================================
-# docker-compose.yml — OWASP A09 Lab: CWE-778 Insufficient Logging
-# ============================================================================
-# Uso:
-#   docker-compose up -d          → Levantar el laboratorio
-#   docker-compose logs -f        → Ver logs en tiempo real (CloudTrail)
-#   docker-compose down           → Detener el laboratorio
-# ============================================================================
-
 version: "3.8"
 
 services:
-  vulnerable-api:
+  vulnerable-server:
     build: .
-    container_name: owasp-a09-cwe778-lab
+    container_name: cwe117-log-injection-lab
     ports:
-      - "3000:3000"
-    restart: unless-stopped
+      - "5000:5000"
+    volumes:
+      # Volúmenes para desarrollo en vivo (hot-reloading)
+      - ./app.py:/app/app.py:ro
+      - ./frontend:/app/frontend:ro
+      - lab_logs:/app/logs
     environment:
-      - NODE_ENV=production
-      - LOG_LEVEL=info
-    # Los logs de CloudTrail (stdout) se visualizan con:
-    #   docker logs owasp-a09-cwe778-lab
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
+      - PYTHONUNBUFFERED=1
+    networks:
+      - lab-network
+
+volumes:
+  lab_logs:
+
+networks:
+  lab-network:
+    driver: bridge

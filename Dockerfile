@@ -1,31 +1,31 @@
 # ============================================================================
-# Dockerfile — OWASP A09 Lab: CWE-778 Insufficient Logging
-# Imagen base: node:18-alpine (ligera y segura para laboratorios)
+# Dockerfile — OWASP A09 Lab: CWE-117 Log Injection / Log Forging
+# Imagen base: python:3.11-alpine (ligera para laboratorios)
 # ============================================================================
 
-FROM node:18-alpine
+FROM python:3.11-alpine
 
 # Metadatos del laboratorio
 LABEL maintainer="Security Lab"
-LABEL description="OWASP A09 — CWE-778: Insufficient Logging Lab"
-LABEL vulnerability="Silent permission enumeration via unmonitored endpoints"
+LABEL description="OWASP A09 — CWE-117: Log Injection / Log Forging Lab"
+LABEL vulnerability="Log entries forging via unsanitized newline characters"
 
 # Crear directorio de trabajo
 WORKDIR /app
 
-# Copiar definición de dependencias e instalar
-COPY package.json ./
-RUN npm install --production
+# Instalar dependencias
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar código del servidor
-COPY server.js ./
+# Directorio de logs
+RUN mkdir -p /app/logs && chmod 777 /app/logs
+
+# Copiar el código del servidor y el frontend (por si no se usa volume)
+COPY app.py ./
+COPY frontend/ ./frontend/
 
 # Exponer el puerto del servicio
-EXPOSE 3000
-
-# Usuario no-root para buenas prácticas (aunque es un lab vulnerable)
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-USER appuser
+EXPOSE 5000
 
 # Comando de inicio
-CMD ["node", "server.js"]
+CMD ["python", "app.py"]

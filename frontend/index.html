@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CWE-117 | Log Injection Vulnerability Lab</title>
+    <meta name="description" content="Laboratorio Interactivo de Vulnerabilidad CWE-117: Log Injection / Log Forging.">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;600&family=Outfit:wght@400;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Efecto de Red / Partículas en Canvas -->
+    <canvas id="networkCanvas"></canvas>
+
+    <!-- Navegación Sticky Superior -->
+    <nav class="glass-nav">
+        <div class="nav-brand">
+            <span class="vuln-id">CWE-117</span> 
+            <span class="vuln-name">Log Injection Lab</span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#overview">Resumen</a></li>
+            <li><a href="#architecture">Arquitectura</a></li>
+            <li><a href="#code-comparison">Código</a></li>
+            <li><a href="#exploit-terminal">Ciber-Terminals</a></li>
+        </ul>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="container">
+        
+        <!-- Header Principal -->
+        <header class="hero-section glass-panel fade-in-up" id="overview">
+            <div class="hero-content">
+                <h1 class="glitch-text" data-text="Log Forging Detected">Log Forging Detected</h1>
+                <p class="subtitle">OWASP A09:2021 — Security Logging and Monitoring Failures</p>
+                <div class="risk-badge">
+                    <span class="pulse-indicator red"></span> Riesgo Alto (Critical)
+                </div>
+                <p>
+                    Cuando una aplicación escribe en el sistema de logs información proporcionada por el usuario 
+                    <b>sin neutralizar los saltos de línea (\n, \r)</b>, un atacante puede fabricar registros falsos 
+                    que corrompen la auditoría del sistema (SIEM).
+                </p>
+                <div class="hero-actions">
+                    <a href="#exploit-terminal" class="btn-primary">Ver Demostración</a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Diagrama Visual / Flujo -->
+        <section class="glass-panel fade-in-up" id="architecture">
+            <h2><span class="cyan-text">&lt;/&gt;</span> Flujo del Ataque</h2>
+            <p>La inyección aprovecha la confianza ciega del Logger en el String enviado.</p>
+            
+            <div class="architecture-diagram">
+                <div class="arch-node attacker">
+                    <div class="node-icon">🥷</div>
+                    <div class="node-label">Atacante</div>
+                    <div class="node-data">"hacker\n[INFO] LOGIN_SUCCESS..."</div>
+                </div>
+                <div class="arch-arrow">
+                    <div class="flowing-packet"></div>
+                </div>
+                <div class="arch-node server">
+                    <div class="node-icon">⚙️</div>
+                    <div class="node-label">API Vulnerable</div>
+                    <div class="node-data">logger.info(input)</div>
+                </div>
+                <div class="arch-arrow red-arrow">
+                    <div class="flowing-packet alert"></div>
+                </div>
+                <div class="arch-node audit">
+                    <div class="node-icon">📄</div>
+                    <div class="node-label">Audit Log</div>
+                    <div class="node-data fake-entry">Entrada Falsa Registrada!</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Código Comparativo -->
+        <section class="glass-panel fade-in-up" id="code-comparison">
+            <h2><span class="purple-text">{}</span> Comparativa de Código</h2>
+            
+            <div class="code-split">
+                <div class="code-box vulnerable">
+                    <div class="code-header">
+                        <span class="dot red"></span> Vulnerable (app.py)
+                    </div>
+                    <pre><code class="language-python">def login():
+    username = request.json.get('username')
+    # ❌ El input fluye directo al archivo de logs
+    logger.info(f"LOGIN_ATTEMPT user={username}")
+    
+    # ... chequeo fallido, pero el log de 
+    # intento ya fue escrito y corrompido.
+</code></pre>
+                </div>
+                <div class="code-box secure">
+                    <div class="code-header">
+                        <span class="dot green"></span> Seguro (Mitigado)
+                    </div>
+                    <pre><code class="language-python">def login():
+    username = request.json.get('username')
+    # ✅ Sanitizar saltos de línea primero
+    sanitized = username.replace('\n', '\\n')\
+                        .replace('\r', '')
+                        
+    logger.info(f"LOGIN_ATTEMPT user={sanitized}")
+</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Simuladores: Atacante vs Servidor -->
+        <section class="terminal-section fade-in-up" id="exploit-terminal">
+            <h2><span class="red-text">#</span> Simulador del Exploit</h2>
+            <p>Observa cómo enviar un payload malicioso contamina en directo el log corporativo.</p>
+
+            <div class="terminals-grid">
+                <!-- Terminal del Atacante -->
+                <div class="hacker-terminal glow-border">
+                    <div class="terminal-header">
+                        <span>Attacker Linux shell — exploit.py</span>
+                        <button id="runExploitBtn" class="btn-micro">RUN ATTACK</button>
+                    </div>
+                    <div class="terminal-body" id="attackerConsole">
+                        <div class="term-line prompt">root@kali:~# ./exploit.py -u admin -i 10.0.0.1</div>
+                        <div class="term-line waiting">Esperando ejecución...</div>
+                    </div>
+                </div>
+
+                <!-- Logs del Servidor -->
+                <div class="server-terminal">
+                    <div class="terminal-header server-header">
+                        <span>Server Audit Logs (/var/log/audit.log)</span>
+                        <div class="pulse-indicator green status"></div>
+                    </div>
+                    <div class="terminal-body" id="serverConsole">
+                        <div class="term-line log-info">2026-04-04 10:45:10 [INFO] SERVER_START service=LogInjectionLab</div>
+                        <div class="term-line log-info">2026-04-04 10:45:10 [INFO] SYSTEM: Audit logging initialized</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <div class="container glass-panel footer-content">
+            <p>Desarrollado para demostración "Vulnerable by Design" | OWASP Foundation</p>
+        </div>
+    </footer>
+
+    <!-- Scripts funcionales y de animación -->
+    <script src="script.js"></script>
+</body>
+</html>
